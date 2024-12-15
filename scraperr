@@ -1,0 +1,27 @@
+use reqwest;
+use scraper::{Html, Selector};
+use tokio;
+
+#[tokio::main]
+async fn main() {
+    let url = "https://example.com/page/";
+    for page in 1..=5 {
+        let page_url = format!("{}{}", url, page);
+        match fetch_data(&page_url).await {
+            Ok(_) => println!("Page {} scraped successfully", page),
+            Err(err) => println!("Failed to scrape page {}: {}", page, err),
+        }
+    }
+}
+
+async fn fetch_data(url: &str) -> Result<(), reqwest::Error> {
+    let res = reqwest::get(url).await?.text().await?;
+    let document = Html::parse_document(&res);
+    let selector = Selector::parse(".article-title").unwrap();
+
+    for element in document.select(&selector) {
+        println!("{}", element.text().collect::<Vec<_>>().join(" "));
+    }
+
+    Ok(())
+}
